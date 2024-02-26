@@ -9,10 +9,10 @@ p.add_argument('-i', action='store') # number of iterations
 args = p.parse_args()
 print(args)
 
-alg = args.a 
-noise = args.n 
-c = args.c
-iterations = args.i
+alg = str(args.a) 
+noise = int(args.n )
+c = int(args.c)
+iterations = int(args.i)
 
 import numpy as np
 from scipy.optimize import minimize
