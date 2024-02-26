@@ -7,11 +7,12 @@ p.add_argument('-n', action='store') # noise
 p.add_argument('-c', action='store') # cutoff
 p.add_argument('-i', action='store') # number of iterations
 args = p.parse_args()
+print(args)
 
-alg = p.a 
-noise = p.n 
-c = p.c
-iterations = p.i
+alg = args.a 
+noise = args.n 
+c = args.c
+iterations = args.i
 
 import numpy as np
 from scipy.optimize import minimize
