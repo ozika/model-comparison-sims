@@ -58,7 +58,7 @@ for algo in "${algorithms[@]}"; do
 
       # submit job to cluster queue and remove it to avoid confusion:
       # sbatch job.slurm
-      cat job.slurm
+      sbatch job.slurm
       rm -f job.slurm
       sleep 6
     done

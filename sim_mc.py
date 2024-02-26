@@ -7,7 +7,6 @@ p.add_argument('-n', action='store') # noise
 p.add_argument('-c', action='store') # cutoff
 p.add_argument('-i', action='store') # number of iterations
 args = p.parse_args()
-print(args)
 
 alg = str(args.a) 
 noise = int(args.n )
@@ -96,4 +95,4 @@ for ii in range(iterations):
             }
         dfrow = pd.DataFrame.from_dict(D, orient="index").T
         df = pd.concat([df, dfrow], axis=0)
-df.to_csv(os.path.join(rf, "data", "model_comparison_iter"+cond_str+".csv") )
+df.to_csv(os.path.join(rf, "data", "four_models", "model_comparison_iter"+cond_str+".csv") )
