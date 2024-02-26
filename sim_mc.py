@@ -13,6 +13,7 @@ alg = str(args.a)
 noise = int(args.n )
 c = int(args.c)
 iterations = int(args.i)
+cond_str = "mc_n"+str(noise)+"_c"+str(c)+"_i"+str(iterations)+"_"+alg
 
 import numpy as np
 from scipy.optimize import minimize
@@ -46,7 +47,7 @@ lvl = lvl_all[0:c]
 o_test = o_all[c:]
 lvl_test = lvl_all[c:]
 for ii in range(iterations):
-    print(ii)
+    print(np.round(ii/iterations,2))
     # split data 
     for m_idx, (m, mname) in enumerate(zip(models, model_names)): # loop over model GENERATING the data
         params_in = gen_rand_vals(bounds[mname])
@@ -95,4 +96,4 @@ for ii in range(iterations):
             }
         dfrow = pd.DataFrame.from_dict(D, orient="index").T
         df = pd.concat([df, dfrow], axis=0)
-df.to_csv(os.path.join(rf, "data", "model_comparison_iter"+str(iterations)+".csv") )
+df.to_csv(os.path.join(rf, "data", "model_comparison_iter"+cond_str+".csv") )
