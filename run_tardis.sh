@@ -53,7 +53,8 @@ for algo in "${algorithms[@]}"; do
       # Load R module
       echo "module load conda" >> job.slurm
       echo "conda activate mcenv" >> job.slurm
-      echo "python3 ${PATH_BASE}/sim_mc.py \
+      echo "pip install numpy scipy pandas matplotlib ozika-groo"
+      echo "python ${PATH_BASE}/sim_mc.py \
       -a ${algo} -n ${n} -c ${c} -i ${niter}" >> job.slurm
 
       # submit job to cluster queue and remove it to avoid confusion:
