@@ -128,6 +128,7 @@ def lklhd_m(params, data,odata):
     ll=sum(nglklhd)
     n = len(odata["o"])
     m1["abserr"] = np.sum(abserr)
+    m1["n"] = n 
     m1["err_per_n"] = m1["abserr"] / m1["n"] 
     m1["rmse"] = np.sum(rse) / n
     
@@ -137,7 +138,7 @@ def lklhd_m(params, data,odata):
     m1["noparams"] = noparams
     m1["AIC"] = 2*noparams + 2*ll #ll is already negative log, thus +
     
-    m1["n"] = n 
+    
     m1["AICc"] = m1["AIC"] + ((2*noparams**2 + 2*noparams ) / (n - noparams - 1))
     m1["BIC"] = noparams*np.log(n) + 2*ll #ll is already negative log, thus +
     m1["HQC"] = 2*ll + 2*noparams*np.log(np.log(n))
