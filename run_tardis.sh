@@ -27,7 +27,7 @@ MEM_MB=4
 
 #flag="nh_models"
 #models=("mm5_nh_PH_hybrid_kappa" "mm5_nh_PH_hybrid_outcome_kappa")
-algorithms=("COBYLA" "Nelder-Mead", "CG", "BFGS")
+algorithms=("COBYLA" "Nelder-Mead" "CG" "BFGS")
 noise_lvl=(5 10 20 40) 
 cutoff=(60 120 150)
 niter=50
