@@ -1,4 +1,3 @@
-#!/bin/sh
 PATH_BASE="${HOME}/projects/model-comparison-sims"
 # Give message to user
 #echo "${SUB_LABEL}: ${MODEL}"
