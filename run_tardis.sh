@@ -26,10 +26,10 @@ MEM_MB=4
 
 #flag="nh_models"
 #models=("mm5_nh_PH_hybrid_kappa" "mm5_nh_PH_hybrid_outcome_kappa")
-algorithms=("COBYLA" "Nelder-Mead")
+algorithms=("COBYLA" "Nelder-Mead", "CG", "BFGS")
 noise_lvl=(5 10 20 40) 
 cutoff=(60 120 150)
-niter=40
+niter=50
 
 for algo in "${algorithms[@]}"; do
   for n in "${noise_lvl[@]}"; do
@@ -53,13 +53,13 @@ for algo in "${algorithms[@]}"; do
       # Load R module
       echo "module load conda" >> job.slurm
       echo "conda activate mcenv" >> job.slurm
-      echo "pip install numpy scipy pandas matplotlib ozika-groo"
+      echo "pip install numpy scipy pandas matplotlib ozika-groo" >> job.slurm
       echo "python ${PATH_BASE}/sim_mc.py \
       -a ${algo} -n ${n} -c ${c} -i ${niter}" >> job.slurm
 
       # submit job to cluster queue and remove it to avoid confusion:
-      # sbatch job.slurm
-      sbatch job.slurm
+      sbatch echo
+      #sbatch job.slurm
       rm -f job.slurm
       sleep 6
     done

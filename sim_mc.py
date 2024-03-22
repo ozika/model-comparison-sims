@@ -50,29 +50,33 @@ for ii in range(iterations):
     # split data 
     for m_idx, (m, mname) in enumerate(zip(models, model_names)): # loop over model GENERATING the data
         params_in = gen_rand_vals(bounds[mname])
-        rewards = m(params_in, {"o": o_all, "model": m, "state":lvl_all})
-        rew_test = rewards["Q"][c:]
-        rewards["Q"] = rewards["Q"][0:c]
+        full_pred = m(params_in, {"o": o_all, "model": m, "state":lvl_all})
+        rew_test = full_pred["Q"][c:]
+        rew_train = full_pred["Q"][0:c]
 
 
         # Fit data 
         AIC =[] 
         BIC = []
         AICc = [] 
+        HQC = [] #https://en.wikipedia.org/wiki/Hannan%E2%80%93Quinn_information_criterion
         P = {}
         for mfit, mname_fit in zip(models, model_names):
-            other_data = {"o": o, "model": mfit, "state":lvl}
-            opt = minimize(fun=lklhd, x0=gen_rand_vals(bounds[mname_fit]), args=(rewards["Q"],other_data), method='COBYLA', bounds=bounds[mname_fit], options={'verbose': 0})
+            other_data = {"o": o, "model": mfit, "state":lvl, "bounds": bounds, "values": rew_train, "alg":alg, "model_name":mname_fit}
+            opt = minimize(fun=lklhd, x0=gen_rand_vals(bounds[mname_fit]), args=(rew_train,other_data), method=alg, bounds=bounds[mname_fit], options={'verbose': 0})
+
+            #cv_res = custom_CV(other_data)
 
             # Get IC 
-            M = lklhd_m(opt.x, rewards["Q"],other_data)
+            M = lklhd_m(opt.x, rew_train, other_data)
             AIC.append(M["AIC"])
             P[mname_fit] = opt.x
             BIC.append(M["BIC"])
             AICc.append(M["AICc"])
+            HQC.append(M["HQC"])
         
         # which model fit best
-        best_idx =[np.argmin(AIC), np.argmin(AICc), np.argmin(BIC)]
+        best_idx =[np.argmin(AIC), np.argmin(AICc), np.argmin(BIC), np.argmin(HQC)]
         # is this the correct model
         #if aic_idx == m_idx:
         #    m_recovery_AIC = 1 # etc
@@ -80,8 +84,8 @@ for ii in range(iterations):
         # get predictive error per trial of the best model
         pred_err = []
         for idxx, best in enumerate(best_idx):
-            other_data = {"o": o_test, "model": models[best_idx[idxx]], "state":lvl_test}
-            Mbest = lklhd_m(P[model_names[best_idx[idxx]]], rew_test, other_data)
+            test_data = {"o": o_test, "model": models[best_idx[idxx]], "state":lvl_test}
+            Mbest = lklhd_m(P[model_names[best_idx[idxx]]], rew_test, test_data)
             pred_err.append(Mbest["err_per_n"])
 
         # Gather data
@@ -89,10 +93,12 @@ for ii in range(iterations):
             "best_model_AIC": model_names[best_idx[0]], 
             "best_model_AICc": model_names[best_idx[1]],  
             "best_model_BIC": model_names[best_idx[2]], 
+            "best_model_HQC": model_names[best_idx[3]], 
             "mean_err_AIC": pred_err[0],
             "mean_err_AICc": pred_err[1],
-            "mean_err_BIC": pred_err[2]               
+            "mean_err_BIC": pred_err[2], 
+            "mean_err_HQC": pred_err[3]                  
             }
         dfrow = pd.DataFrame.from_dict(D, orient="index").T
         df = pd.concat([df, dfrow], axis=0)
-df.to_csv(os.path.join(rf, "data", "four_models", "model_comparison_iter"+cond_str+".csv") )
+df.to_csv(os.path.join(rf, "data", "four_models_B", "model_comparison_iter"+cond_str+".csv") )

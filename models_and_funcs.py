@@ -114,28 +114,34 @@ def lklhd_m(params, data,odata):
     model = odata["model"]
     m1 = model(params, odata)
     nglklhd = []
-    err = []
+    rse = []
+    abserr = []
     for idx,outcm in enumerate(odata["o"]):
         # using gaussian likelihood
         cp  = stats.norm(m1["Q"][idx], 20).cdf([data[idx]-0.01, data[idx]+0.01])
         lklhd = -np.log(cp[1]-cp[0])
-        err.append(abs(data[idx] - m1["Q"][idx]))
+        abserr.append(abs(data[idx] - m1["Q"][idx]))
+        rse.append(np.sqrt(pow(data[idx] - m1["Q"][idx], 2)))
         if np.isinf(lklhd) | np.isnan(lklhd):
             lklhd = 9999
         nglklhd.append(lklhd)
     ll=sum(nglklhd)
-    m1["abserr"] = np.sum(err)
+    n = len(odata["o"])
+    m1["abserr"] = np.sum(abserr)
+    m1["err_per_n"] = m1["abserr"] / m1["n"] 
+    m1["rmse"] = np.sum(rse) / n
     
     m1["nglklhd"] = nglklhd
     m1["negLL"] = ll
     noparams = len(params)
     m1["noparams"] = noparams
     m1["AIC"] = 2*noparams + 2*ll #ll is already negative log, thus +
-    n = len(odata["o"])
+    
     m1["n"] = n 
     m1["AICc"] = m1["AIC"] + ((2*noparams**2 + 2*noparams ) / (n - noparams - 1))
     m1["BIC"] = noparams*np.log(n) + 2*ll #ll is already negative log, thus +
-    m1["err_per_n"] = m1["abserr"] / m1["n"] 
+    m1["HQC"] = 2*ll + 2*noparams*np.log(np.log(n))
+    
     return m1
 
 def gen_rand_vals(bounds):
