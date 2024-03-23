@@ -6,8 +6,10 @@ p.add_argument('-a', action='store') # algorithm
 p.add_argument('-n', action='store') # noise
 p.add_argument('-c', action='store') # cutoff
 p.add_argument('-i', action='store') # number of iterations
+p.add_argument('-d', action='store') # number of iterations
 args = p.parse_args()
 
+cond = str(args.d)
 alg = str(args.a) 
 noise = int(args.n )
 c = int(args.c)
@@ -37,17 +39,19 @@ bounds = {"rw1": ((0,100),(0,1)),
           "ph_basic": ((0,100),(0,1),(0,1))}
 df = pd.DataFrame()
 
-o_all = gen_states( lvls=[20,80], ch=20, n=N)+np.random.normal(0, noise, N) 
-lvl_all = gen_states( lvls=[0,1], ch=20, n=N)
 
-o = o_all[0:c]
-lvl = lvl_all[0:c]
-
-o_test = o_all[c:]
-lvl_test = lvl_all[c:]
 for ii in range(iterations):
     print(np.round(ii/iterations,2))
-    # split data 
+    # Generate data
+    o_all = gen_states( lvls=[20,80], ch=20, n=N)+np.random.normal(0, noise, N) 
+    lvl_all = gen_states( lvls=[0,1], ch=20, n=N)
+
+    o = o_all[0:c]
+    lvl = lvl_all[0:c]
+
+    o_test = o_all[c:]
+    lvl_test = lvl_all[c:]
+
     for m_idx, (m, mname) in enumerate(zip(models, model_names)): # loop over model GENERATING the data
         params_in = gen_rand_vals(bounds[mname])
         full_pred = m(params_in, {"o": o_all, "model": m, "state":lvl_all})
@@ -101,4 +105,4 @@ for ii in range(iterations):
             }
         dfrow = pd.DataFrame.from_dict(D, orient="index").T
         df = pd.concat([df, dfrow], axis=0)
-df.to_csv(os.path.join(rf, "data", "four_models_B", "model_comparison_iter"+cond_str+".csv") )
+df.to_csv(os.path.join(rf, "data", cond, "model_comparison_iter"+cond_str+".csv") )
