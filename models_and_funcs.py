@@ -1,6 +1,7 @@
 import numpy as np
 from random import random
 import scipy.stats as stats
+import pandas as pd
 
 def gen_states(lvls=[20,80], ch=30, n=120):
     reps = int(n/ch)

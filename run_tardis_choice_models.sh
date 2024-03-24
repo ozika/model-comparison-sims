@@ -59,7 +59,7 @@ for algo in "${algorithms[@]}"; do
       -a ${algo} -n ${n} -c ${c} -i ${niter} -d ${cond}" >> job.slurm
 
       # submit job to cluster queue and remove it to avoid confusion:
-      #cat job.slurm
+      cat job.slurm
       sbatch job.slurm
       rm -f job.slurm
       sleep 4
