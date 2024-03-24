@@ -184,7 +184,7 @@ def softmax(values, beta, parametrization="inverse"):
   return(probs)
 
 
-def rw1_choice(params=[0.2], indata=indata):
+def rw1_choice(params=[0.2], indata=[]):
     alpha = params[0]  # p[1] ... learning rate
     beta = params[1] # inverse temperature
     Qs = np.zeros((indata["r"].shape[0]+1,indata["r"].shape[1]))*np.nan
@@ -236,7 +236,7 @@ def rw1_choice(params=[0.2], indata=indata):
     mod = {"Qs": Qs, "choices":choices, "choice_prob":ch_prob}        
     return mod
 
-def rw2_val_choice(params=[0.2, 0.2, 1], indata=indata):
+def rw2_val_choice(params=[0.2, 0.2, 1], indata=[]):
     alpha_pos = params[0]
     alpha_neg = params[1]
 
@@ -291,7 +291,7 @@ def rw2_val_choice(params=[0.2, 0.2, 1], indata=indata):
     mod = {"Qs": Qs, "choices":choices, "choice_prob":ch_prob}        
     return mod
 
-def rw3_choice(params=[0.2, 0.2, 0.2, 5], indata=indata):
+def rw3_choice(params=[0.2, 0.2, 0.2, 5], indata=[]):
     # model with separate alphas for the three cues
     alpha = params[0:3]
     #alpha[0] = params[0]  # p[1] ... learning rate
@@ -345,7 +345,7 @@ def rw3_choice(params=[0.2, 0.2, 0.2, 5], indata=indata):
     mod = {"Qs": Qs, "choices":choices, "choice_prob":ch_prob}        
     return mod
 
-def rw6_val_choice(params=[0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 5], indata=indata):
+def rw6_val_choice(params=[0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 5], indata=[]):
     # model with separate alphas for the three cues
     alpha_pos = params[0:3]
     alpha_neg = params[3:6]
