@@ -150,3 +150,295 @@ def gen_rand_vals(bounds):
     for p in bounds: 
         b.append(p[0] + (random() * (p[1] - p[0])))
     return b
+
+def gen_bandits(N=180, nbandit=3, noise=2):
+
+    rewards = np.zeros((N,nbandit))*np.nan 
+    rewards[:,0] = gen_states( lvls=[20, 20], ch=20, n=N) + np.random.normal(0, noise, N) 
+    rewards[:,1] = gen_states( lvls=[20, 80], ch=20, n=N) + np.random.normal(0, noise, N) 
+    rewards[:,2] = gen_states( lvls=[80, 80], ch=20, n=N) + np.random.normal(0, noise, N) 
+
+    c = pd.DataFrame(list(it.combinations([x for x in range(nbandit)], 2)))
+    reps = N//c.shape[0]
+    repeated_df = pd.concat([c] * reps, ignore_index=True)
+    repeated_df.columns = ["option1", "option2"]
+
+    return rewards, repeated_df
+
+def softmax(values, beta, parametrization="inverse"):
+  denom = 0   
+  if parametrization=="inverse":
+    # expected rnage [0 Inf] igher values make choices more equal
+    for v in values:
+      denom = denom + np.exp(v/beta) 
+    probs = np.exp(values/beta) / (denom)
+  #http://incompleteideas.net/book/ebook/node17.html
+  elif parametrization=="log_inverse":
+    for v in values:
+      denom = denom + np.exp(v/np.log(beta)) 
+    probs = np.exp(values/np.log(beta)) / (denom)
+  elif parametrization=="normal":
+    for v in values:
+      denom = denom + np.exp(v*beta) 
+    probs = np.exp(values*beta) / (denom)
+  return(probs)
+
+
+def rw1_choice(params=[0.2], indata=indata):
+    alpha = params[0]  # p[1] ... learning rate
+    beta = params[1] # inverse temperature
+    Qs = np.zeros((indata["r"].shape[0]+1,indata["r"].shape[1]))*np.nan
+    Qs[0,0:3] = 50
+    ntr = indata["r"].shape[0]
+    choices = np.zeros((indata["r"].shape[0]))*np.nan
+    ch_prob = np.zeros((indata["r"].shape[0]))*np.nan
+    for tr in range(ntr):
+        # get options available on this trial
+        op1 = indata["options"]["option1"].iloc[tr] 
+        op2 = indata["options"]["option2"].iloc[tr] 
+        
+        #values on this trial 
+        values = Qs[tr,[op1, op2]]
+        
+        # choice
+        probs = softmax(values, beta, parametrization="inverse")
+
+
+        if any(np.isnan(probs)) | any(np.isinf(probs)):
+           
+           print(indata["model"])
+           print(params)
+           print(probs)
+           print(values)
+           stop= 1
+        # generate choices or use probabilities to make choices
+        if indata["generate_choices"] == 1:
+           choice = np.random.choice([op1, op2], p=probs)
+        else: 
+           choice = int(indata["choices"][tr] )
+
+        # probability of choice (for likelihood)  
+        if choice == op1: 
+           chosen_prob = probs[0]
+        elif choice == op2: 
+           chosen_prob = probs[1]
+        choices[tr] = choice
+        ch_prob[tr] = chosen_prob
+
+        # update chosen
+        Qs[tr+1,choice] = Qs[tr,choice] + alpha*(indata["r"][tr, choice] - Qs[tr,choice])
+
+        #update unchosen 
+        for ch in list(set(list([0,1,2])) - set(list([choice]))):
+           Qs[tr+1,ch] = Qs[tr,ch]
+
+        #Q.append(Q[o_idx] + alpha*(o - Q[o_idx])   )
+    mod = {"Qs": Qs, "choices":choices, "choice_prob":ch_prob}        
+    return mod
+
+def rw2_val_choice(params=[0.2, 0.2, 1], indata=indata):
+    alpha_pos = params[0]
+    alpha_neg = params[1]
+
+    beta = params[2] # inverse temperature
+    Qs = np.zeros((indata["r"].shape[0]+1,indata["r"].shape[1]))*np.nan
+    Qs[0,0:3] = 50
+    ntr = indata["r"].shape[0]
+    choices = np.zeros((indata["r"].shape[0]))*np.nan
+    ch_prob = np.zeros((indata["r"].shape[0]))*np.nan
+    for tr in range(ntr):
+        # get options available on this trial
+        op1 = indata["options"]["option1"].iloc[tr] 
+        op2 = indata["options"]["option2"].iloc[tr] 
+        
+        #values on this trial 
+        values = Qs[tr,[op1, op2]]
+        
+        # choice
+        probs = softmax(values, beta, parametrization="inverse")
+
+        if any(np.isnan(probs)) | any(np.isinf(probs)):
+           print(indata["model"])
+           print(params)
+           print(probs)
+           print(values)
+           stop= 1
+        # generate choices or use probabilities to make choices
+        if indata["generate_choices"] == 1:
+           choice = np.random.choice([op1, op2], p=probs)
+        else: 
+           choice = int(indata["choices"][tr] )
+
+        # probability of choice (for likelihood)  
+        if choice == op1: 
+           chosen_prob = probs[0]
+        elif choice == op2: 
+           chosen_prob = probs[1]
+        choices[tr] = choice
+        ch_prob[tr] = chosen_prob
+
+        # update chosen
+        if (indata["r"][tr, choice] - Qs[tr,choice]) > 0:
+          Qs[tr+1,choice] = Qs[tr,choice] + alpha_pos*(indata["r"][tr, choice] - Qs[tr,choice])
+        elif (indata["r"][tr, choice] - Qs[tr,choice]) <= 0:
+           Qs[tr+1,choice] = Qs[tr,choice] + alpha_neg*(indata["r"][tr, choice] - Qs[tr,choice])
+
+        #update unchosen 
+        for ch in list(set(list([0,1,2])) - set(list([choice]))):
+           Qs[tr+1,ch] = Qs[tr,ch]
+
+        #Q.append(Q[o_idx] + alpha*(o - Q[o_idx])   )
+    mod = {"Qs": Qs, "choices":choices, "choice_prob":ch_prob}        
+    return mod
+
+def rw3_choice(params=[0.2, 0.2, 0.2, 5], indata=indata):
+    # model with separate alphas for the three cues
+    alpha = params[0:3]
+    #alpha[0] = params[0]  # p[1] ... learning rate
+    #alpha[1]= params[1]  # p[1] ... learning rate
+    #alpha[2] = params[2]  # p[1] ... learning rate
+    beta = params[3] # inverse temperature
+    Qs = np.zeros((indata["r"].shape[0]+1,indata["r"].shape[1]))*np.nan
+    Qs[0,0:3] = 50
+    ntr = indata["r"].shape[0]
+    choices = np.zeros((indata["r"].shape[0]))*np.nan
+    ch_prob = np.zeros((indata["r"].shape[0]))*np.nan
+    for tr in range(ntr):
+        # get options available on this trial
+        op1 = indata["options"]["option1"].iloc[tr] 
+        op2 = indata["options"]["option2"].iloc[tr] 
+        
+        #values on this trial 
+        values = Qs[tr,[op1, op2]]
+        
+        # choice
+        probs = softmax(values, beta, parametrization="inverse")
+
+        if any(np.isnan(probs)) | any(np.isinf(probs)):
+           print(indata["model"])
+           print(params)
+           print(probs)
+           print(values)
+           stop= 1
+        # generate choices or use probabilities to make choices
+        if indata["generate_choices"] == 1:
+           choice = np.random.choice([op1, op2], p=probs)
+        else: 
+           choice = int(indata["choices"][tr] )
+
+        # probability of choice (for likelihood)  
+        if choice == op1: 
+           chosen_prob = probs[0]
+        elif choice == op2: 
+           chosen_prob = probs[1]
+        choices[tr] = choice
+        ch_prob[tr] = chosen_prob
+
+        # update chosen
+        Qs[tr+1,choice] = Qs[tr,choice] + alpha[choice]*(indata["r"][tr, choice] - Qs[tr,choice])
+
+        #update unchosen 
+        for ch in list(set(list([0,1,2])) - set(list([choice]))):
+           Qs[tr+1,ch] = Qs[tr,ch]
+
+        #Q.append(Q[o_idx] + alpha*(o - Q[o_idx])   )
+    mod = {"Qs": Qs, "choices":choices, "choice_prob":ch_prob}        
+    return mod
+
+def rw6_val_choice(params=[0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 5], indata=indata):
+    # model with separate alphas for the three cues
+    alpha_pos = params[0:3]
+    alpha_neg = params[3:6]
+    beta = params[6] # inverse temperature
+    Qs = np.zeros((indata["r"].shape[0]+1,indata["r"].shape[1]))*np.nan
+    Qs[0,0:3] = 50
+    ntr = indata["r"].shape[0]
+    choices = np.zeros((indata["r"].shape[0]))*np.nan
+    ch_prob = np.zeros((indata["r"].shape[0]))*np.nan
+    for tr in range(ntr):
+        # get options available on this trial
+        op1 = indata["options"]["option1"].iloc[tr] 
+        op2 = indata["options"]["option2"].iloc[tr] 
+        
+        #values on this trial 
+        values = Qs[tr,[op1, op2]]
+        
+        # choice
+        probs = softmax(values, beta, parametrization="inverse")
+
+        if any(np.isnan(probs)) | any(np.isinf(probs)):
+           print(indata["model"])
+           print(params)
+           print(probs)
+           print(values)
+           stop= 1
+           
+        # generate choices or use probabilities to make choices
+        if indata["generate_choices"] == 1:
+           choice = np.random.choice([op1, op2], p=probs)
+        else: 
+           choice = int(indata["choices"][tr] )
+
+        # probability of choice (for likelihood)  
+        if choice == op1: 
+           chosen_prob = probs[0]
+        elif choice == op2: 
+           chosen_prob = probs[1]
+        choices[tr] = choice
+        ch_prob[tr] = chosen_prob
+
+        # update chosen
+        if (indata["r"][tr, choice] - Qs[tr,choice]) > 0:
+          Qs[tr+1,choice] = Qs[tr,choice] + alpha_pos[choice]*(indata["r"][tr, choice] - Qs[tr,choice])
+        elif (indata["r"][tr, choice] - Qs[tr,choice]) <= 0:
+           Qs[tr+1,choice] = Qs[tr,choice] + alpha_neg[choice]*(indata["r"][tr, choice] - Qs[tr,choice])
+
+        #update unchosen 
+        for ch in list(set(list([0,1,2])) - set(list([choice]))):
+           Qs[tr+1,ch] = Qs[tr,ch]
+
+        #Q.append(Q[o_idx] + alpha*(o - Q[o_idx])   )
+    mod = {"Qs": Qs, "choices":choices, "choice_prob":ch_prob}        
+    return mod
+
+
+
+def lklhd_choice(params, indata):
+    model = indata["model"]
+    m1 = model(params, indata)
+    ll=np.sum(-np.log(m1["choice_prob"]))
+    return ll
+
+
+def lklhd_choice_m(params, indata):
+    # 1/ evaluate model given participant's choices 
+    model = indata["model"]
+    indata["data_choices"] = indata["choices"]
+    m1 = model(params, indata)
+    negLL=np.sum(-np.log(m1["choice_prob"]))
+   
+    n = indata["r"].shape[0]
+    m1["n"] = n 
+    
+    m1["negLL"] = negLL
+    noparams = len(params)
+    m1["noparams"] = noparams
+    m1["AIC"] = 2*noparams + 2*negLL #ll is already negative log, thus +
+    
+    
+    m1["AICc"] = m1["AIC"] + ((2*noparams**2 + 2*noparams ) / (n - noparams - 1))
+    m1["BIC"] = noparams*np.log(n) + 2*negLL #ll is already negative log, thus +
+    m1["HQC"] = 2*negLL + 2*noparams*np.log(np.log(n))
+
+    # 2/ use parameters to get choice accuracy measure
+    indata2=indata 
+    indata2["generate_choices"]=1
+    m2 = model(params, indata2)
+    m1["acc"] = np.mean(m2["choices"] == indata["data_choices"])
+    return m1
+
+def replace_random_values(arr, proportion):
+    num_to_replace = int(len(arr) * proportion)
+    indices_to_replace = np.random.choice(len(arr), num_to_replace, replace=False)
+    arr[indices_to_replace] = np.random.randint(3, size=num_to_replace)
+    return arr
