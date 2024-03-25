@@ -212,6 +212,7 @@ def rw1_choice(params=[0.2], indata=[]):
            print(params)
            print(probs)
            print(values)
+           probs = np.array([0.5, 0.5])
            stop= 1
         # generate choices or use probabilities to make choices
         if indata["generate_choices"] == 1:
@@ -264,6 +265,7 @@ def rw2_val_choice(params=[0.2, 0.2, 1], indata=[]):
            print(params)
            print(probs)
            print(values)
+           probs = np.array([0.5, 0.5])
            stop= 1
         # generate choices or use probabilities to make choices
         if indata["generate_choices"] == 1:
@@ -321,6 +323,7 @@ def rw3_choice(params=[0.2, 0.2, 0.2, 5], indata=[]):
            print(params)
            print(probs)
            print(values)
+           probs = np.array([0.5, 0.5])
            stop= 1
         # generate choices or use probabilities to make choices
         if indata["generate_choices"] == 1:
@@ -373,6 +376,7 @@ def rw6_val_choice(params=[0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 5], indata=[]):
            print(params)
            print(probs)
            print(values)
+           probs = np.array([0.5, 0.5])
            stop= 1
            
         # generate choices or use probabilities to make choices
