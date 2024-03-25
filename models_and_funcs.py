@@ -439,8 +439,13 @@ def lklhd_choice_m(params, indata):
     m1["acc"] = np.mean(m2["choices"] == indata["data_choices"])
     return m1
 
-def replace_random_values(arr, proportion):
+def replace_random_values(arr, options_df, proportion):
     num_to_replace = int(len(arr) * proportion)
     indices_to_replace = np.random.choice(len(arr), num_to_replace, replace=False)
-    arr[indices_to_replace] = np.random.randint(3, size=num_to_replace)
+
+    for i, idx in enumerate(indices_to_replace):
+        option1, option2 = options_df.loc[idx, ["option1", "option2"]]
+        random_option = np.random.choice([option1, option2])
+        arr[idx] = random_option
+
     return arr
