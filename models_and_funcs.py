@@ -207,18 +207,23 @@ def rw1_choice(params=[0.2], indata=[]):
 
 
         if any(np.isnan(probs)) | any(np.isinf(probs)):
-           
            print(indata["model"])
            print(params)
            print(probs)
            print(values)
            probs = np.array([0.5, 0.5])
            stop= 1
-        # generate choices or use probabilities to make choices
-        if indata["generate_choices"] == 1:
-           choice = np.random.choice([op1, op2], p=probs)
-        else: 
-           choice = int(indata["choices"][tr] )
+           # generate choices or use probabilities to make choices
+           if indata["generate_choices"] == 1:
+               choice = np.random.choice([op1, op2])
+           else: 
+               choice = int(indata["choices"][tr] )
+        else:
+           # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
 
         # probability of choice (for likelihood)  
         if choice == op1: 
@@ -267,11 +272,17 @@ def rw2_val_choice(params=[0.2, 0.2, 1], indata=[]):
            print(values)
            probs = np.array([0.5, 0.5])
            stop= 1
-        # generate choices or use probabilities to make choices
-        if indata["generate_choices"] == 1:
-           choice = np.random.choice([op1, op2], p=probs)
-        else: 
-           choice = int(indata["choices"][tr] )
+           # generate choices or use probabilities to make choices
+           if indata["generate_choices"] == 1:
+               choice = np.random.choice([op1, op2])
+           else: 
+               choice = int(indata["choices"][tr] )
+        else:
+           # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
 
         # probability of choice (for likelihood)  
         if choice == op1: 
@@ -325,11 +336,17 @@ def rw3_choice(params=[0.2, 0.2, 0.2, 5], indata=[]):
            print(values)
            probs = np.array([0.5, 0.5])
            stop= 1
-        # generate choices or use probabilities to make choices
-        if indata["generate_choices"] == 1:
-           choice = np.random.choice([op1, op2], p=probs)
-        else: 
-           choice = int(indata["choices"][tr] )
+           # generate choices or use probabilities to make choices
+           if indata["generate_choices"] == 1:
+               choice = np.random.choice([op1, op2])
+           else: 
+               choice = int(indata["choices"][tr] )
+        else:
+           # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
 
         # probability of choice (for likelihood)  
         if choice == op1: 
@@ -378,12 +395,19 @@ def rw6_val_choice(params=[0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 5], indata=[]):
            print(values)
            probs = np.array([0.5, 0.5])
            stop= 1
+           # generate choices or use probabilities to make choices
+           if indata["generate_choices"] == 1:
+               choice = np.random.choice([op1, op2])
+           else: 
+               choice = int(indata["choices"][tr] )
+        else:
+           # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
            
-        # generate choices or use probabilities to make choices
-        if indata["generate_choices"] == 1:
-           choice = np.random.choice([op1, op2], p=probs)
-        else: 
-           choice = int(indata["choices"][tr] )
+        
 
         # probability of choice (for likelihood)  
         if choice == op1: 
