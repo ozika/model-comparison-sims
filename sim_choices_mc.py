@@ -61,7 +61,7 @@ for ii in range(iterations):
         mpred = m(params_in, indata)
 
         #induce noice by randomly replaceing proportion of choices
-        mpred["choices"] = replace_random_values(mpred["choices"], noise)
+        mpred["choices"] = replace_random_values(mpred["choices"], indata["options"], noise)
 
         ch_train = mpred["choices"][0:c]
         ch_test = mpred["choices"][c:]
