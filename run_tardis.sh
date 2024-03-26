@@ -56,7 +56,7 @@ for algo in "${algorithms[@]}"; do
         # Load R module
         echo "module load conda" >> job.slurm
         echo "conda activate mcenv" >> job.slurm
-        echo "pip install numpy scipy pandas matplotlib ozika-groo" >> job.slurm
+        echo "pip install numpy scipy pandas matplotlib groo-ozika==0.1.1" >> job.slurm
         echo "python ${PATH_BASE}/sim_mc.py \
         -a ${algo} -n ${n} -v ${vn} -c ${c} -i ${niter} -d ${cond}" >> job.slurm
 

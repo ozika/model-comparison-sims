@@ -5,7 +5,7 @@ N_CPUS=1
 # maximum number of threads per process:
 N_THREADS=1
 # memory demand in *GB*
-MEM_MB=4
+MEM_MB=1
 # data directory
 #PATH_DATA="${PATH_BASE}/data/temp"
 
@@ -31,7 +31,7 @@ noise_lvl=(0.1 0.2 0.4 0.7)
 val_noise_lvl=(5 10 20 40) 
 cutoff=(60 120 150)
 niter=50
-cond="choice_models_4"
+cond="choice_models_B"
 
 for algo in "${algorithms[@]}"; do
   for cn in "${noise_lvl[@]}"; do
@@ -56,13 +56,13 @@ for algo in "${algorithms[@]}"; do
         # Load R module
         echo "module load conda" >> job.slurm
         echo "conda activate mcenv" >> job.slurm
-        echo "pip install numpy scipy pandas matplotlib ozika-groo" >> job.slurm
+        echo "pip install numpy scipy pandas matplotlib groo-ozika==0.1.1" >> job.slurm
         echo "python ${PATH_BASE}/sim_choices_mc.py \
         -a ${algo} -x ${cn} -n ${vn} -c ${c} -i ${niter} -d ${cond}" >> job.slurm
 
         # submit job to cluster queue and remove it to avoid confusion:
-        cat job.slurm
-        #sbatch job.slurm
+        #cat job.slurm
+        sbatch job.slurm
         rm -f job.slurm
         sleep 4
         done

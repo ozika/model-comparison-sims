@@ -33,19 +33,19 @@ from models_and_funcs import *
 N = 180
 #noise_level= [5, 10, 20]
 #cutoff = [90, 120, 150]
-models = [rw1_choice, rw2_val_choice, rw3_choice, rw6_val_choice] 
-model_names = ["rw1_choice", "rw2_val_choice", "rw3_choice", "rw6_val_choice"]
+models = [rw1_choice, rw2_val_choice, rw3_choice, rw_persistence] 
+model_names = ["rw1_choice", "rw2_val_choice", "rw3_choice", "rw_persistence"]
 bounds = {"rw1_choice": ((0,1),(0.001,50)),
           "rw2_val_choice": ((0,1),(0,1),(0.001,50)), 
           "rw3_choice": ((0,1),(0,1),(0,1),(0.001,50)), 
-          "rw6_val_choice": ((0,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0.001,50))}
+          "rw_persistence": ((0,1),(-np.inf, np.inf), (0,1), (0.0001,50))}
 df = pd.DataFrame()
 
 
 for ii in range(iterations):
     print(np.round(ii/iterations,2))
     # Generate data
-    rew_all, options_all = gen_bandits(N, nbandit=3)
+    rew_all, options_all = gen_bandits(N, nbandit=3, noise=value_noise)
     #indata = {"options": repeated_df, "r":rewards, "nbandit":3, "model":rw6_val_choice, "generate_choices":1} 
 
     # trainign data 

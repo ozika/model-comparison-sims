@@ -200,6 +200,17 @@ def softmax(values, beta, parametrization="inverse"):
     probs = np.exp(values*beta) / (denom)
   return(probs)
 
+# Generate data 
+def softmax_persist(values, choice_stick, beta, epsilon, parametrization="inverse"): 
+    denom = 0   
+    if parametrization=="inverse":
+        # expected rnage [0 Inf] igher values make choices more equal
+        for vidx, v in enumerate(values):
+            denom = denom + np.exp(v/beta + epsilon*choice_stick[vidx]) 
+        probs = np.exp(values/beta + epsilon*choice_stick) / (denom)
+
+    return(probs)
+
 
 def rw1_choice(params=[0.2], indata=[]):
     alpha = params[0]  # p[1] ... learning rate
@@ -220,7 +231,6 @@ def rw1_choice(params=[0.2], indata=[]):
         # choice
         probs = softmax(values, beta, parametrization="inverse")
 
-        """
         if any(np.isnan(probs)) | any(np.isinf(probs)):
            print(indata["model"])
            print(params)
@@ -234,12 +244,11 @@ def rw1_choice(params=[0.2], indata=[]):
            else: 
                choice = int(indata["choices"][tr] )
         else:
-        """
-        # generate choices or use probabilities to make choices
-        if indata["generate_choices"] == 1:
-            choice = np.random.choice([op1, op2], p=probs)
-        else: 
-            choice = int(indata["choices"][tr] )
+            # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
 
         # probability of choice (for likelihood)  
         if choice == op1: 
@@ -281,7 +290,6 @@ def rw2_val_choice(params=[0.2, 0.2, 1], indata=[]):
         # choice
         probs = softmax(values, beta, parametrization="inverse")
 
-        """
         if any(np.isnan(probs)) | any(np.isinf(probs)):
            print(indata["model"])
            print(params)
@@ -295,12 +303,11 @@ def rw2_val_choice(params=[0.2, 0.2, 1], indata=[]):
            else: 
                choice = int(indata["choices"][tr] )
         else:
-        """
-        # generate choices or use probabilities to make choices
-        if indata["generate_choices"] == 1:
-            choice = np.random.choice([op1, op2], p=probs)
-        else: 
-            choice = int(indata["choices"][tr] )
+            # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
 
         # probability of choice (for likelihood)  
         if choice == op1: 
@@ -347,7 +354,6 @@ def rw3_choice(params=[0.2, 0.2, 0.2, 5], indata=[]):
         # choice
         probs = softmax(values, beta, parametrization="inverse")
 
-        """
         if any(np.isnan(probs)) | any(np.isinf(probs)):
            print(indata["model"])
            print(params)
@@ -361,12 +367,11 @@ def rw3_choice(params=[0.2, 0.2, 0.2, 5], indata=[]):
            else: 
                choice = int(indata["choices"][tr] )
         else:
-        """
-        # generate choices or use probabilities to make choices
-        if indata["generate_choices"] == 1:
-            choice = np.random.choice([op1, op2], p=probs)
-        else: 
-            choice = int(indata["choices"][tr] )
+            # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
 
         # probability of choice (for likelihood)  
         if choice == op1: 
@@ -408,7 +413,7 @@ def rw6_val_choice(params=[0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 5], indata=[]):
         # choice
         probs = softmax(values, beta, parametrization="inverse")
 
-        """
+
         if any(np.isnan(probs)) | any(np.isinf(probs)):
            print(indata["model"])
            print(params)
@@ -422,12 +427,11 @@ def rw6_val_choice(params=[0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 5], indata=[]):
            else: 
                choice = int(indata["choices"][tr] )
         else:
-        """
-        # generate choices or use probabilities to make choices
-        if indata["generate_choices"] == 1:
-            choice = np.random.choice([op1, op2], p=probs)
-        else: 
-            choice = int(indata["choices"][tr] )
+            # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
            
         
 
@@ -454,6 +458,72 @@ def rw6_val_choice(params=[0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 5], indata=[]):
     return mod
 
 
+def rw_persistence(params=[0.2, 0.7, 5], indata=[]):
+    alpha = params[0]  # p[1] ... learning rate
+    epsilon = params[1] # "stickiness parameter"
+    eta = params[2] #stickiness updating
+    beta = params[3] # inverse temperature
+    Qs = np.zeros((indata["r"].shape[0]+1,indata["r"].shape[1]))*np.nan
+    Qs[0,0:3] = 50
+    ntr = indata["r"].shape[0]
+    choices = np.zeros((indata["r"].shape[0]))*np.nan
+    choice_stick = np.zeros((indata["r"].shape[0]+1, indata["r"].shape[1]))*np.nan
+    choice_stick[0,0:3] = 0
+    ch_prob = np.zeros((indata["r"].shape[0]))*np.nan
+    for tr in range(ntr):
+        # get options available on this trial
+        op1 = indata["options"]["option1"].iloc[tr] 
+        op2 = indata["options"]["option2"].iloc[tr] 
+        
+        #values on this trial 
+        values = Qs[tr,[op1, op2]]
+
+        
+        # choice
+        probs = softmax_persist(values, choice_stick[tr,[op1, op2]], beta, epsilon, parametrization="inverse")
+        #print(probs)
+
+        if any(np.isnan(probs)) | any(np.isinf(probs)):
+           print(indata["model"])
+           print(params)
+           print(probs)
+           print(values)
+           probs = np.array([0.5, 0.5])
+           stop= 1
+           # generate choices or use probabilities to make choices
+           if indata["generate_choices"] == 1:
+               choice = np.random.choice([op1, op2])
+           else: 
+               choice = int(indata["choices"][tr] )
+        else:
+            # generate choices or use probabilities to make choices
+            if indata["generate_choices"] == 1:
+                choice = np.random.choice([op1, op2], p=probs)
+            else: 
+                choice = int(indata["choices"][tr] )
+        
+        # probability of choice (for likelihood)  
+        if choice == op1: 
+           chosen_prob = probs[0]
+        elif choice == op2: 
+           chosen_prob = probs[1]
+        choices[tr] = choice
+        ch_prob[tr] = chosen_prob
+
+        # update chosen
+        Qs[tr+1,choice] = Qs[tr,choice] + alpha*(indata["r"][tr, choice] - Qs[tr,choice])
+        # update choice stickiness
+        choice_stick[tr+1, choice] = choice_stick[tr, choice]  + eta*(1-choice_stick[tr, choice])
+
+        #update unchosen 
+        for ch in list(set(list([0,1,2])) - set(list([choice]))):
+           Qs[tr+1,ch] = Qs[tr,ch]
+           # update choice stickiness
+           choice_stick[tr+1, ch] = choice_stick[tr, ch] + eta*(0-choice_stick[tr, ch])
+
+        #Q.append(Q[o_idx] + alpha*(o - Q[o_idx])   )
+    mod = {"Qs": Qs, "choices":choices, "choice_prob":ch_prob, "choice_stick": choice_stick}        
+    return mod
 
 def lklhd_choice(params, indata):
     model = indata["model"]
