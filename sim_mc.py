@@ -4,6 +4,7 @@ import argparse as ap
 p = ap.ArgumentParser(description="Run model comparison")
 p.add_argument('-a', action='store') # algorithm 
 p.add_argument('-n', action='store') # noise
+p.add_argument('-v', action='store') # noise
 p.add_argument('-c', action='store') # cutoff
 p.add_argument('-i', action='store') # number of iterations
 p.add_argument('-d', action='store') # number of iterations
@@ -12,9 +13,10 @@ args = p.parse_args()
 cond = str(args.d)
 alg = str(args.a) 
 noise = int(args.n )
+value_noise = int(args.v )
 c = int(args.c)
 iterations = int(args.i)
-cond_str = "mc_n"+str(noise)+"_c"+str(c)+"_i"+str(iterations)+"_"+alg
+cond_str = "mc_n"+str(noise)+"vn"+str(value_noise)+"_c"+str(c)+"_i"+str(iterations)+"_"+alg
 
 import numpy as np
 from scipy.optimize import minimize
@@ -43,22 +45,23 @@ df = pd.DataFrame()
 for ii in range(iterations):
     print(np.round(ii/iterations,2))
     # Generate data
-    o_all = gen_states( lvls=[20,80], ch=20, n=N)+np.random.normal(0, noise, N) 
-    lvl_all = gen_states( lvls=[0,1], ch=20, n=N)
+    r_all = gaus_walk(N=180, vol = 5, noise=noise)
+    #o_all = gen_states( lvls=[20,80], ch=20, n=N)+np.random.normal(0, noise, N) 
 
-    o = o_all[0:c]
-    lvl = lvl_all[0:c]
 
-    o_test = o_all[c:]
-    lvl_test = lvl_all[c:]
+    r_train = r_all[0:c]
+    r_test = r_all[c:]
 
     for m_idx, (m, mname) in enumerate(zip(models, model_names)): # loop over model GENERATING the data
         params_in = gen_rand_vals(bounds[mname])
-        full_pred = m(params_in, {"o": o_all, "model": m, "state":lvl_all})
-        rew_test = full_pred["Q"][c:]
-        rew_train = full_pred["Q"][0:c]
+        full_pred = m(params_in, {"o": r_all, "model": m})
 
+        # add noise to values
+        full_pred["Q"] = full_pred["Q"] + np.random.normal(0, value_noise, N+2) 
 
+        value_train = full_pred["Q"][0:c]
+        value_test = full_pred["Q"][c:]
+        
         # Fit data 
         AIC =[] 
         BIC = []
@@ -66,13 +69,13 @@ for ii in range(iterations):
         HQC = [] #https://en.wikipedia.org/wiki/Hannan%E2%80%93Quinn_information_criterion
         P = {}
         for mfit, mname_fit in zip(models, model_names):
-            other_data = {"o": o, "model": mfit, "state":lvl, "bounds": bounds, "values": rew_train, "alg":alg, "model_name":mname_fit}
-            opt = minimize(fun=lklhd, x0=gen_rand_vals(bounds[mname_fit]), args=(rew_train,other_data), method=alg, bounds=bounds[mname_fit], options={'verbose': 0})
+            other_data = {"o": r_train, "model": mfit, "bounds": bounds, "alg":alg, "model_name":mname_fit}
+            opt = minimize(fun=lklhd, x0=gen_rand_vals(bounds[mname_fit]), args=(value_train,other_data), method=alg, bounds=bounds[mname_fit], options={'verbose': 0})
 
             #cv_res = custom_CV(other_data)
 
             # Get IC 
-            M = lklhd_m(opt.x, rew_train, other_data)
+            M = lklhd_m(opt.x, value_train, other_data)
             AIC.append(M["AIC"])
             P[mname_fit] = opt.x
             BIC.append(M["BIC"])
@@ -88,8 +91,8 @@ for ii in range(iterations):
         # get predictive error per trial of the best model
         pred_err = []
         for idxx, best in enumerate(best_idx):
-            test_data = {"o": o_test, "model": models[best_idx[idxx]], "state":lvl_test}
-            Mbest = lklhd_m(P[model_names[best_idx[idxx]]], rew_test, test_data)
+            test_data = {"o": r_test, "model": models[best_idx[idxx]]}
+            Mbest = lklhd_m(P[model_names[best_idx[idxx]]], value_test, test_data)
             pred_err.append(Mbest["err_per_n"])
 
         # Gather data

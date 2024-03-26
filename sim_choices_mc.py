@@ -4,17 +4,19 @@ import argparse as ap
 p = ap.ArgumentParser(description="Run model comparison")
 p.add_argument('-a', action='store') # algorithm 
 p.add_argument('-n', action='store') # noise
+p.add_argument('-x', action='store') # choice noise
 p.add_argument('-c', action='store') # cutoff
 p.add_argument('-i', action='store') # number of iterations
-p.add_argument('-d', action='store') # number of iterations
+p.add_argument('-d', action='store') # condition (folder name)
 args = p.parse_args()
 
 cond = str(args.d)
 alg = str(args.a) 
-noise = float(args.n )
+value_noise = float(args.n )
+choice_noise = float(args.x )
 c = int(args.c)
 iterations = int(args.i)
-cond_str = "mc_n"+str(noise)+"_c"+str(c)+"_i"+str(iterations)+"_"+alg
+cond_str = "mc_n"+str(value_noise)+"_xn"+str(choice_noise)+"_c"+str(c)+"_i"+str(iterations)+"_"+alg
 
 import numpy as np
 from scipy.optimize import minimize
@@ -61,7 +63,7 @@ for ii in range(iterations):
         mpred = m(params_in, indata)
 
         #induce noice by randomly replaceing proportion of choices
-        mpred["choices"] = replace_random_values(mpred["choices"], indata["options"], noise)
+        mpred["choices"] = replace_random_values(mpred["choices"], indata["options"], choice_noise)
 
         ch_train = mpred["choices"][0:c]
         ch_test = mpred["choices"][c:]
@@ -74,7 +76,7 @@ for ii in range(iterations):
         P = {}
         for mfit, mname_fit in zip(models, model_names):
             # prepare data generated above for fit - all trainingn    
-            indata = {"options": op_train, "r":rw_train, "nbandit":3, "model":mfit, "generate_choices":0, "choices":ch_train} 
+            indata = {"options": op_train, "r":rw_train, "nbandit":3, "model":mfit, "generate_choices":0, "choices":ch_train, "get_acc": 0} 
 
             # fit
             opt = minimize(fun=lklhd_choice, x0=gen_rand_vals(bounds[mname_fit]), args=(indata), method=alg, bounds=bounds[mname_fit], options={'verbose': 0})
@@ -83,11 +85,10 @@ for ii in range(iterations):
             M = lklhd_choice_m(opt.x, indata)
 
             AIC.append(M["AIC"])
-            P[mname_fit] = opt.x
             BIC.append(M["BIC"])
             AICc.append(M["AICc"])
             HQC.append(M["HQC"])
-           
+            P[mname_fit] = opt.x
         
         # which model fit best
         best_idx =[np.argmin(AIC), np.argmin(AICc), np.argmin(BIC), np.argmin(HQC)]
@@ -99,12 +100,12 @@ for ii in range(iterations):
         acc = []
         for idxx, best in enumerate(best_idx):
             #test all 
-            indata = {"options": op_test, "r":rw_test, "nbandit":3, "model":models[best_idx[idxx]], "generate_choices":0, "choices":ch_test} 
+            indata = {"options": op_test, "r":rw_test, "nbandit":3, "model":models[best_idx[idxx]], "generate_choices":0, "choices":ch_test, "get_acc": 1} 
             Mbest = lklhd_choice_m(P[model_names[best_idx[idxx]]], indata)
             acc.append(Mbest["acc"])
 
         # Gather data
-        D = {"noise": noise, "cutoff":c, "true_model": mname, "algo":alg,
+        D = {"value_noise": value_noise, "choice_noise": choice_noise, "cutoff":c, "true_model": mname, "algo":alg,
             "best_model_AIC": model_names[best_idx[0]], 
             "best_model_AICc": model_names[best_idx[1]],  
             "best_model_BIC": model_names[best_idx[2]], 
