@@ -96,7 +96,7 @@ for ii in range(iterations):
             pred_err.append(Mbest["err_per_n"])
 
         # Gather data
-        D = {"noise": noise, "cutoff":c, "true_model": mname, "algo":alg,
+        D = {"noise": noise, "value_noise":value_noise, "cutoff":c, "true_model": mname, "algo":alg,
             "best_model_AIC": model_names[best_idx[0]], 
             "best_model_AICc": model_names[best_idx[1]],  
             "best_model_BIC": model_names[best_idx[2]], 

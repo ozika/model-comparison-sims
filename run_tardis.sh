@@ -31,7 +31,7 @@ noise_lvl=(5 10 20 40)
 value_noise_lvl=(5 10 20 40) 
 cutoff=(60 120 150)
 niter=50
-cond="four_models_D"
+cond="four_models_E"
 
 for algo in "${algorithms[@]}"; do
   for n in "${noise_lvl[@]}"; do
@@ -54,6 +54,7 @@ for algo in "${algorithms[@]}"; do
         echo "#SBATCH --partition long" >> job.slurm
         echo "mkdir ${PATH_BASE}/data/${cond}/" >> job.slurm
         # Load R module
+        echo "mkdir ${PATH_BASE}/data/${cond}/" >> job.slurm
         echo "module load conda" >> job.slurm
         echo "conda activate mcenv" >> job.slurm
         echo "pip install numpy scipy pandas matplotlib groo-ozika==0.1.1" >> job.slurm
