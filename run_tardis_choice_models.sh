@@ -64,7 +64,7 @@ for algo in "${algorithms[@]}"; do
         #cat job.slurm
         sbatch job.slurm
         rm -f job.slurm
-        sleep 4
+        sleep 2
         done
     done
   done
