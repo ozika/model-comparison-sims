@@ -31,7 +31,7 @@ noise_lvl=(0.1 0.2 0.4 0.7)
 val_noise_lvl=(5 10 20 40) 
 cutoff=(60 120 150)
 niter=50
-cond="choice_models_B"
+cond="choice_models_C"
 
 for algo in "${algorithms[@]}"; do
   for cn in "${noise_lvl[@]}"; do

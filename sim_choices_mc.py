@@ -38,7 +38,7 @@ model_names = ["rw1_choice", "rw2_val_choice", "rw3_choice", "rw_persistence"]
 bounds = {"rw1_choice": ((0,1),(0.001,50)),
           "rw2_val_choice": ((0,1),(0,1),(0.001,50)), 
           "rw3_choice": ((0,1),(0,1),(0,1),(0.001,50)), 
-          "rw_persistence": ((0,1),(-np.inf, np.inf), (0,1), (0.0001,50))}
+          "rw_persistence": ((0,1),(-50, 50), (0,1), (0.0001,50))}
 df = pd.DataFrame()
 
 
